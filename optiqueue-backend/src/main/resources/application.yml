@@ -46,6 +46,13 @@ management:
       enabled: false   # enabled in Phase 5 once Upstash is wired in
 
 optiqueue:
+  bootstrap:
+    admin-username: ${ADMIN_USERNAME:admin}
+    admin-password: ${ADMIN_PASSWORD:admin12345}    # MUST override in production
+    staff-username: ${STAFF_USERNAME:staff}
+    staff-password: ${STAFF_PASSWORD:staff12345}    # MUST override in production
+  seed:
+    demo-products: ${SEED_DEMO_PRODUCTS:false}
   cache:
     ttl-seconds: ${CACHE_TTL_SECONDS:300}   # 5 min, per blueprint
   jwt:

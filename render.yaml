@@ -1,0 +1,32 @@
+# Render Blueprint — creates the backend service when you click
+# "New +" → "Blueprint" in Render and point it at this repo.
+# (Java has no native Render runtime, hence Docker.)
+services:
+  - type: web
+    name: optiqueue-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./optiqueue-backend/Dockerfile
+    dockerContext: ./optiqueue-backend
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DB_URL          # jdbc:postgresql://<neon-host>/<db>?sslmode=require
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: REDIS_URL       # rediss://default:<password>@<upstash-host>:6379
+        sync: false
+      - key: CACHE_TYPE
+        value: redis
+      - key: JWT_SECRET      # long random string, >= 32 chars
+        generateValue: true
+      - key: CORS_ALLOWED_ORIGINS   # your Vercel URL, e.g. https://optiqueue.vercel.app
+        sync: false
+      - key: ADMIN_PASSWORD   # bootstrap admin account password (pick a strong one)
+        sync: false
+      - key: STAFF_PASSWORD   # bootstrap staff account password
+        sync: false
+      - key: SEED_DEMO_PRODUCTS
+        value: "true"

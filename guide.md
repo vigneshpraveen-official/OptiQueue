@@ -128,8 +128,56 @@ curl -s -X POST localhost:8080/api/orders -H "Authorization: Bearer $TOKEN" \
 - **The `@Version` mechanic:** every UPDATE runs `… WHERE id=? AND version=?`. If another transaction won the race, 0 rows update → exception → retry with **fresh transaction and fresh data** (that's why retry and transaction live on *separate beans* — stacking them on one method silently retries inside the dead transaction).
 - **Why indexes come later (Phase 6):** so we can measure real before/after latency — resume numbers must be measured, not invented.
 
-## What I need from you next
+## Postman
 
-1. **Neon.tech** account → send me the connection string (Phase 1 live-boot + Phase 6 benchmarks).
-2. **Upstash** account → send me the Redis URL (`rediss://…`) (Phase 5).
-3. GitHub repo + Render + Vercel — only needed at Phase 9; I'll walk you through each click.
+Import `postman/OptiQueue.postman_collection.json` into Postman. With the local backend running, run the folders in order (Auth → Products → Orders) — tokens are captured automatically. The collection covers every endpoint and every role rejection (verified: 19 requests, 20 assertions, all passing).
+
+---
+
+# DEPLOYMENT — your click-by-click guide (Day 9)
+
+Do these in order. Whenever a step says **send me X**, paste it in our chat and I'll do the wiring/verification.
+
+## Step 1 — Neon (PostgreSQL)
+
+1. Go to https://neon.tech → sign up (GitHub login is easiest) → **Create project**, name `optiqueue`, pick the region closest to you (e.g. `ap-southeast-1` Singapore), Postgres 16+.
+2. On the project dashboard, click **Connect** → toggle to show the **connection string** (starts `postgresql://…neon.tech/neondb?sslmode=require`).
+3. **Send me** that connection string (with the password visible).
+
+## Step 2 — Upstash (Redis)
+
+1. Go to https://upstash.com → sign up → **Create database**, name `optiqueue`, pick the same/closest region, TLS on.
+2. On the database page find the **Redis connect URL**: `rediss://default:<password>@<host>:6379`.
+3. **Send me** that URL.
+
+## Step 3 — GitHub
+
+1. Create a new repository (e.g. `optiqueue`) on your GitHub — empty, no README (we already have one).
+2. **Send me** the repo URL. I'll add the remote and push all commits (you may be prompted once for `gh auth login` — I'll tell you exactly what to run if so).
+
+## Step 4 — Render (backend)
+
+Easiest path (Blueprint — uses the `render.yaml` I already wrote):
+1. https://render.com → sign up with GitHub → **New +** → **Blueprint** → select the `optiqueue` repo.
+2. Render reads `render.yaml` and shows the `optiqueue-backend` service. It will ask for the `sync: false` env values — paste:
+   - `DB_URL` = `jdbc:postgresql://<neon-host>/<db>?sslmode=require` (I'll give you this exact string after Step 1 — note it differs from Neon's `postgresql://` format)
+   - `DB_USERNAME`, `DB_PASSWORD` = from Neon
+   - `REDIS_URL` = the Upstash `rediss://…` URL
+   - `CORS_ALLOWED_ORIGINS` = your Vercel URL (add after Step 5; use `*` temporarily)
+   - `ADMIN_PASSWORD`, `STAFF_PASSWORD` = strong passwords of your choice (these become the admin/staff logins)
+3. Deploy. First Docker build takes ~5–10 min. Health check: `https://<your-service>.onrender.com/actuator/health` → `{"status":"UP"}`.
+4. **Send me** the service URL.
+
+## Step 5 — Vercel (frontend)
+
+1. https://vercel.com → sign up with GitHub → **Add New… → Project** → import the `optiqueue` repo.
+2. Set **Root Directory** = `optiqueue-frontend` (important!). Framework auto-detects Vite.
+3. Add env var: `VITE_API_BASE_URL` = your Render URL (no trailing slash).
+4. Deploy → **send me** the Vercel URL.
+5. Back in Render, set `CORS_ALLOWED_ORIGINS` to that exact Vercel URL (e.g. `https://optiqueue.vercel.app`) and let it redeploy.
+
+## Step 6 — I verify end-to-end
+
+Once URLs are live I'll run the full flow (register → browse → order → admin ship) against production and update the README with the live link.
+
+**Free-tier quirks to expect:** Render free services sleep after 15 min idle (first request takes ~50s — mention this to recruiters); Neon may cold-start after inactivity (~1s).

@@ -97,11 +97,15 @@ Matches blueprint §5 exactly, plus `GET /api/orders/mine` (CUSTOMER). Error con
 
 1. **User provides Neon credentials** → boot app against Neon (`DB_URL` etc.), verify Flyway migrates + bootstrap users appear.
 2. **User provides Upstash `REDIS_URL`** → run with `CACHE_TYPE=redis`, verify hit/miss + eviction against real Redis (watch for serialization of `PageResponse` records through GenericJackson2JsonRedisSerializer — validated only against simple cache so far; if deserialization misbehaves, fall back to caching JSON strings).
-3. **Phase 9 deploy** (user does all dashboard clicks; NO MCP tools):
-   - GitHub repo + push (user creates repo, we add remote and push)
-   - Render Web Service: build `./mvnw clean package -DskipTests`, start `java -jar target/optiqueue-backend-0.0.1-SNAPSHOT.jar`, env: DB_URL/DB_USERNAME/DB_PASSWORD/REDIS_URL/CACHE_TYPE=redis/JWT_SECRET (generate strong!)/CORS_ALLOWED_ORIGINS=<vercel url>/bootstrap admin+staff passwords
-   - Vercel: import `optiqueue-frontend`, env `VITE_API_BASE_URL=<render url>`; SPA rewrite for react-router (vercel.json with rewrites to /index.html — NOT YET CREATED)
-   - README.md for GitHub (NOT YET WRITTEN)
+3. **Phase 9 deploy** (user does all dashboard clicks; NO MCP tools). All prep is DONE:
+   - `optiqueue-backend/Dockerfile` (multi-stage; Render has NO native Java runtime → Docker required)
+   - `render.yaml` Blueprint (env vars declared; JWT_SECRET auto-generated; SEED_DEMO_PRODUCTS=true; healthCheckPath /actuator/health)
+   - `optiqueue-frontend/vercel.json` (SPA rewrite), README.md, `.github/workflows/ci.yml` (backend tests + frontend build)
+   - `DemoProductSeeder` seeds 24 products when SEED_DEMO_PRODUCTS=true and table empty
+   - Bootstrap creds now env-mapped: ADMIN_USERNAME/ADMIN_PASSWORD/STAFF_USERNAME/STAFF_PASSWORD
+   - Postman collection at `postman/OptiQueue.postman_collection.json` — validated with newman (19 requests / 20 assertions, all pass)
+   - Click-by-click user instructions live in guide.md ("DEPLOYMENT" section)
+   - Remaining: user creates Neon/Upstash/GitHub/Render/Vercel and sends credentials/URLs → then: convert Neon `postgresql://` string to JDBC form for DB_URL, push to GitHub, verify live E2E, add live link to README
 4. Optional: re-run read-load benchmark against deployed stack for a Redis-specific cache figure.
 
 ## 9. Benchmark results (all REAL, measured 2026-07-18 — full detail in benchmarks/RESULTS.md)
