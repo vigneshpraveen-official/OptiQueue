@@ -1,0 +1,14 @@
+# local env/secrets — never commit credentials
+.env
+*.env.local
+
+# build artifacts
+optiqueue-backend/target/
+node_modules/
+dist/
+
+# editor/OS noise
+.vscode/
+.idea/
+*.log
+.DS_Store
