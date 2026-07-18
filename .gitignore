@@ -12,3 +12,4 @@ dist/
 .idea/
 *.log
 .DS_Store
+k6/last-run-summary.json
