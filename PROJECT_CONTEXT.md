@@ -14,7 +14,7 @@
 | 2. Auth (register/login, JWT, security) | Day 2 | ✅ DONE | `AuthFlowIntegrationTest` (6 tests) |
 | 3. Product CRUD + RBAC | Day 3 | ✅ DONE | `ProductRbacIntegrationTest` (5 tests) |
 | 4. Orders + optimistic locking + retry | Day 4 | ✅ DONE | `ConcurrentOrderIntegrationTest` (3) + `OrderServiceRetryTest` (3) |
-| 5. Redis caching (Upstash) | Day 5 | 🟡 CODE DONE | `ProductCachingIntegrationTest`; cache benchmarked (−63% avg latency, 2.6× throughput). Only the Upstash connection itself pends user credentials |
+| 5. Redis caching (Upstash) | Day 5 | ✅ DONE | Verified live against Upstash 2026-07-18: keys `optiqueue:product::1` + page key created on read, round-trip deserialization OK, keys evicted on order placement; benchmarked −63% avg latency, 2.6× throughput |
 | 6. Seed 10k products + index benchmark | Day 6 | ✅ DONE | `IndexBenchmark` — ~91% avg latency cut, see benchmarks/RESULTS.md |
 | 7. k6 concurrency load test | Day 7 | ✅ DONE | `k6/order-race.js` — 500 VUs, 0 oversell, see benchmarks/RESULTS.md |
 | 8. React frontend | Day 8 | ✅ DONE | Playwright browser E2E 9/9 (register→cart→order→admin ship→staff RBAC); screenshots in docs/screenshots |
@@ -23,11 +23,12 @@
 **Test suite:** 20/20 passing (`./mvnw test` with `JAVA_HOME=~/.jdks/jdk-17.0.19+10`).
 **All measured benchmark numbers live in `benchmarks/RESULTS.md` — treat that file as the source of truth for resume figures.**
 
-## 2. Blocked on user (human actions pending)
+## 2. Cloud services (LIVE as of 2026-07-18)
 
-- **Neon.tech** Postgres: user must create free account + project, provide JDBC URL/user/password → goes into `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` env vars. Until then, local runs use embedded-Postgres tests only; the app cannot boot against a real dev DB.
-- **Upstash** Redis: user must create free DB, provide `rediss://…` URL → `REDIS_URL` env var (Phase 5).
-- **Render + Vercel + GitHub remote**: needed at Phase 9. User handles all dashboard actions manually.
+- **Neon Postgres**: LIVE and migrated (V1+V2 applied, 24 demo products + admin/staff seeded). Host `ep-spring-sunset-aw4o77hd.c-12.us-east-1.aws.neon.tech`, db `neondb`, user `neondb_owner`. JDBC form: `jdbc:postgresql://<host>/neondb?sslmode=require`. **Credentials are NOT in the repo** — user has them (chat history); local copy in scratchpad `prod-env.sh` (session-temporary).
+- **Upstash Redis**: LIVE, verified (`knowing-starfish-78553.upstash.io:6379`, rediss URL held by user). Cache keys prefix `optiqueue:`.
+- **GitHub**: `git@github.com:vigneshpraveen-official/OptiQueue.git`, branch `main`. SSH key `~/.ssh/id_ed25519` generated on this machine — user must add the public key to GitHub before pushing works.
+- **Render + Vercel**: pending user dashboard actions (guide.md Steps 4–5).
 - **HARD CONSTRAINT:** Never use MCP tools/connectors (Vercel, Figma, Supabase, etc.) — shared account config belongs to the user's friend. All cloud actions are done by the user manually in dashboards, guided by us.
 
 ## 3. Environment facts (this machine)
