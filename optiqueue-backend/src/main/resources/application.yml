@@ -46,6 +46,8 @@ management:
       enabled: false   # enabled in Phase 5 once Upstash is wired in
 
 optiqueue:
+  cache:
+    ttl-seconds: ${CACHE_TTL_SECONDS:300}   # 5 min, per blueprint
   jwt:
     secret: ${JWT_SECRET:change-me-local-dev-secret-at-least-256-bits-long-0123456789}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}   # 24h

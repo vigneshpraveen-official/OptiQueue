@@ -46,6 +46,9 @@ class OrderServiceRetryTest {
     @MockitoBean
     private OrderRepository orderRepository;
 
+    @MockitoBean
+    private com.optiqueue.service.ProductCacheService productCacheService;
+
     private PlaceOrderRequest request() {
         return new PlaceOrderRequest(List.of(new OrderItemRequest(1L, 1)));
     }

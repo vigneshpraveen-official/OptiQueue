@@ -1,5 +1,6 @@
 package com.optiqueue.controller;
 
+import com.optiqueue.dto.PageResponse;
 import com.optiqueue.dto.ProductDtos.CreateProductRequest;
 import com.optiqueue.dto.ProductDtos.ProductResponse;
 import com.optiqueue.dto.ProductDtos.RestockRequest;
@@ -7,7 +8,6 @@ import com.optiqueue.dto.ProductDtos.UpdateProductRequest;
 import com.optiqueue.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -23,7 +23,7 @@ public class ProductController {
     private final ProductService productService;
 
     @GetMapping
-    public Page<ProductResponse> list(@PageableDefault(size = 20, sort = "id") Pageable pageable) {
+    public PageResponse<ProductResponse> list(@PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return productService.list(pageable);
     }
 

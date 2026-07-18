@@ -36,6 +36,7 @@ public class OrderService {
 
     private final OrderPlacementService orderPlacementService;
     private final OrderRepository orderRepository;
+    private final ProductCacheService productCacheService;
 
     /**
      * Retries the whole transactional placement (fresh transaction + fresh
@@ -47,7 +48,11 @@ public class OrderService {
             maxAttempts = 3,
             backoff = @Backoff(delay = 50, multiplier = 2, random = true))
     public OrderResponse placeOrder(String username, PlaceOrderRequest request) {
-        return OrderResponse.from(orderPlacementService.placeOrderOnce(username, request));
+        OrderResponse response = OrderResponse.from(orderPlacementService.placeOrderOnce(username, request));
+        // Stock changed and the transaction has committed → drop stale cache entries.
+        productCacheService.evictProducts(
+                request.items().stream().map(i -> i.productId()).toList());
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -86,6 +91,8 @@ public class OrderService {
                 Product product = item.getProduct();
                 product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
             }
+            productCacheService.evictProducts(
+                    order.getItems().stream().map(i -> i.getProduct().getId()).toList());
         }
         order.setStatus(newStatus);
         return OrderResponse.from(order);
