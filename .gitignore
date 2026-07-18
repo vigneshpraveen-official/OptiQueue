@@ -14,3 +14,7 @@ dist/
 .DS_Store
 k6/last-run-summary.json
 github.png
+render-env-values.txt
+image copy.png
+*.png
+support.md

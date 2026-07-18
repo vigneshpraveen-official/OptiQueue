@@ -4,6 +4,8 @@
 
 **Concurrent Order Processing & Inventory Management System** — a layered Spring Boot backend + React frontend that guarantees inventory correctness under concurrent load, with measured performance numbers to back it up.
 
+**Live demo:** [optiqueue-zeta.vercel.app](https://optiqueue-zeta.vercel.app) (backend: `https://optiqueue-backend.onrender.com`) — login `admin`/`admin12345` or `staff`/`staff12345`, or register a customer account. Free-tier backend sleeps after 15 min idle; first request can take ~50s to wake up.
+
 > The problem: when many customers order the last units of a product simultaneously, naive systems oversell — two orders both "succeed" against stock that exists once. OptiQueue makes that impossible.
 
 ## Measured results (see [`benchmarks/RESULTS.md`](benchmarks/RESULTS.md) for methodology)

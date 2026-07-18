@@ -18,7 +18,7 @@
 | 6. Seed 10k products + index benchmark | Day 6 | ✅ DONE | `IndexBenchmark` — ~91% avg latency cut, see benchmarks/RESULTS.md |
 | 7. k6 concurrency load test | Day 7 | ✅ DONE | `k6/order-race.js` — 500 VUs, 0 oversell, see benchmarks/RESULTS.md |
 | 8. React frontend | Day 8 | ✅ DONE | Playwright browser E2E 9/9 (register→cart→order→admin ship→staff RBAC); screenshots in docs/screenshots |
-| 9. Deploy (Render/Vercel) + README | Day 9 | ⬜ TODO | blocked on user accounts |
+| 9. Deploy (Render/Vercel) + README | Day 9 | ✅ DONE | Live: backend `https://optiqueue-backend.onrender.com` (health UP), frontend `https://optiqueue-zeta.vercel.app`; verified admin login + cached product list return 200 against production 2026-07-19 |
 
 **Test suite:** 20/20 passing (`./mvnw test` with `JAVA_HOME=~/.jdks/jdk-17.0.19+10`).
 **All measured benchmark numbers live in `benchmarks/RESULTS.md` — treat that file as the source of truth for resume figures.**
@@ -28,7 +28,7 @@
 - **Neon Postgres**: LIVE and migrated (V1+V2 applied, 24 demo products + admin/staff seeded). Host `ep-spring-sunset-aw4o77hd.c-12.us-east-1.aws.neon.tech`, db `neondb`, user `neondb_owner`. JDBC form: `jdbc:postgresql://<host>/neondb?sslmode=require`. **Credentials are NOT in the repo** — user has them (chat history); local copy in scratchpad `prod-env.sh` (session-temporary).
 - **Upstash Redis**: LIVE, verified (`knowing-starfish-78553.upstash.io:6379`, rediss URL held by user). Cache keys prefix `optiqueue:`.
 - **GitHub**: `git@github.com:vigneshpraveen-official/OptiQueue.git`, branch `main`. SSH key `~/.ssh/id_ed25519` generated on this machine — user must add the public key to GitHub before pushing works.
-- **Render + Vercel**: pending user dashboard actions (guide.md Steps 4–5).
+- **Render + Vercel**: LIVE. Backend `https://optiqueue-backend.onrender.com` (Docker, free plan, health check `/actuator/health` → UP). Frontend `https://optiqueue-zeta.vercel.app` (Vercel, root dir `optiqueue-frontend`). `CORS_ALLOWED_ORIGINS` on Render set to the exact Vercel URL. **Admin/staff bootstrap note:** `DemoUserBootstrap` is idempotent (creates only if username absent) — Neon was already seeded with admin/staff from earlier local Phase 5 testing using the *local defaults*, so the `ADMIN_PASSWORD`/`STAFF_PASSWORD` values later set in Render's env never took effect on the existing rows. **Live login credentials are the defaults: `admin/admin12345`, `staff/staff12345`** — not the values in the git-ignored `render-env-values.txt`.
 - **HARD CONSTRAINT:** Never use MCP tools/connectors (Vercel, Figma, Supabase, etc.) — shared account config belongs to the user's friend. All cloud actions are done by the user manually in dashboards, guided by us.
 
 ## 3. Environment facts (this machine)
