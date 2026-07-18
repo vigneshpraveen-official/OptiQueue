@@ -1,5 +1,7 @@
 # OptiQueue
 
+[![CI](https://github.com/vigneshpraveen-official/OptiQueue/actions/workflows/ci.yml/badge.svg)](https://github.com/vigneshpraveen-official/OptiQueue/actions/workflows/ci.yml)
+
 **Concurrent Order Processing & Inventory Management System** — a layered Spring Boot backend + React frontend that guarantees inventory correctness under concurrent load, with measured performance numbers to back it up.
 
 > The problem: when many customers order the last units of a product simultaneously, naive systems oversell — two orders both "succeed" against stock that exists once. OptiQueue makes that impossible.
