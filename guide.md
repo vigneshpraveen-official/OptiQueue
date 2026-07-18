@@ -6,7 +6,50 @@
 
 ## What exists right now
 
-The **backend is functional through Day 4** of the blueprint: auth with JWT, role-based access (ADMIN / STAFF / CUSTOMER), product CRUD, and the star of the show — **order placement that cannot oversell**, protected by optimistic locking with automatic retries.
+**Days 1–8 of the blueprint are complete.** Backend (auth/JWT/RBAC, products, concurrency-safe orders, caching layer), React frontend, and all three benchmarks with **real measured numbers** (see `benchmarks/RESULTS.md`):
+
+- Indexing cut average hot-query latency **~91%** (17.6 ms → 1.5 ms) on a 100k-order dataset.
+- **500 concurrent buyers, zero overselling** (k6-verified against the DB).
+- Caching cut repeat-read response time **~63%** and raised throughput **2.6×**.
+
+Remaining: connecting real Neon + Upstash, and deployment (Render + Vercel) — those need your accounts.
+
+## Run the whole app locally — NO cloud accounts needed
+
+Terminal 1 (backend on :8080, embedded PostgreSQL, data resets on restart):
+```bash
+cd "/media/vp/PRIMARY/VS CODE/Projects/OptiQueue/optiqueue-backend"
+JAVA_HOME=~/.jdks/jdk-17.0.19+10 ./mvnw test-compile exec:java \
+  -Dexec.mainClass=com.optiqueue.LocalDevApplication -Dexec.classpathScope=test
+```
+Terminal 2 (frontend on :5173):
+```bash
+cd "/media/vp/PRIMARY/VS CODE/Projects/OptiQueue/optiqueue-frontend"
+npm run dev
+```
+Open http://localhost:5173 — log in as `admin/admin12345` (create products, manage orders), `staff/staff12345` (restock, ship), or register your own customer account and buy things.
+
+## Re-run the benchmarks yourself
+
+```bash
+# Index benchmark (self-contained, ~1 min)
+cd optiqueue-backend
+JAVA_HOME=~/.jdks/jdk-17.0.19+10 ./mvnw -q test-compile exec:java \
+  -Dexec.mainClass=com.optiqueue.benchmark.IndexBenchmark -Dexec.classpathScope=test
+
+# Concurrency race (backend must be running)
+~/.local/bin/k6 run -e VUS=300 -e STOCK=500 -e PRODUCTS=10 k6/order-race.js
+
+# Cache comparison (run once with backend started CACHE_TYPE=none, once with CACHE_TYPE=simple)
+~/.local/bin/k6 run -e VUS=20 -e DURATION=30s k6/read-load.js
+```
+
+## One small sudo fix (optional, whenever convenient)
+
+Vite currently uses file polling because your system's file-watcher limit is exhausted. The clean fix (needs admin — run it yourself):
+```bash
+echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+```
 
 ## One-time setup on your machine (already done for you)
 

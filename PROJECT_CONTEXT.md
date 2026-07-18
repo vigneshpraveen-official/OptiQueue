@@ -14,13 +14,14 @@
 | 2. Auth (register/login, JWT, security) | Day 2 | ✅ DONE | `AuthFlowIntegrationTest` (6 tests) |
 | 3. Product CRUD + RBAC | Day 3 | ✅ DONE | `ProductRbacIntegrationTest` (5 tests) |
 | 4. Orders + optimistic locking + retry | Day 4 | ✅ DONE | `ConcurrentOrderIntegrationTest` (3) + `OrderServiceRetryTest` (3) |
-| 5. Redis caching (Upstash) | Day 5 | ⬜ TODO | — |
-| 6. Seed 10k products + index benchmark | Day 6 | ⬜ TODO | — |
-| 7. k6 concurrency load test | Day 7 | ⬜ TODO | — |
-| 8. React frontend | Day 8 | ⬜ TODO | — |
-| 9. Deploy (Render/Vercel) + README | Day 9 | ⬜ TODO | — |
+| 5. Redis caching (Upstash) | Day 5 | 🟡 CODE DONE | `ProductCachingIntegrationTest`; cache benchmarked (−63% avg latency, 2.6× throughput). Only the Upstash connection itself pends user credentials |
+| 6. Seed 10k products + index benchmark | Day 6 | ✅ DONE | `IndexBenchmark` — ~91% avg latency cut, see benchmarks/RESULTS.md |
+| 7. k6 concurrency load test | Day 7 | ✅ DONE | `k6/order-race.js` — 500 VUs, 0 oversell, see benchmarks/RESULTS.md |
+| 8. React frontend | Day 8 | ✅ DONE | builds clean; dev server verified serving; browser walk-through by user pending |
+| 9. Deploy (Render/Vercel) + README | Day 9 | ⬜ TODO | blocked on user accounts |
 
-**Test suite:** 18/18 passing (`./mvnw test` with `JAVA_HOME=~/.jdks/jdk-17.0.19+10`).
+**Test suite:** 20/20 passing (`./mvnw test` with `JAVA_HOME=~/.jdks/jdk-17.0.19+10`).
+**All measured benchmark numbers live in `benchmarks/RESULTS.md` — treat that file as the source of truth for resume figures.**
 
 ## 2. Blocked on user (human actions pending)
 
@@ -94,14 +95,24 @@ Matches blueprint §5 exactly, plus `GET /api/orders/mine` (CUSTOMER). Error con
 
 ## 8. Next steps (in order)
 
-1. **Phase 5**: RedisConfig + `@Cacheable` on product list/detail (TTL 5 min) + `@CacheEvict` on update/restock/order-placement/cancellation. Needs `REDIS_URL` from user (Upstash) — for local verification can also run without.
-2. **Phase 6**: seed script (10k+ products, orders), V2__add_indexes.sql, `EXPLAIN ANALYZE` before/after on Neon → record real latency numbers in this file + guide.md.
-3. **Phase 7**: k6 script (`k6/order-race.js`), needs k6 binary (user may need to install or download portable). Record max clean concurrency.
-4. **Phase 8**: `optiqueue-frontend` Vite React app (pages: Login, ProductList, Cart, Orders, AdminDashboard; AuthContext; axios instance with JWT interceptor; `VITE_API_BASE_URL`).
-5. **Phase 9**: user creates GitHub repo + Render/Vercel setups (guided); README.md; live E2E test.
+1. **User provides Neon credentials** → boot app against Neon (`DB_URL` etc.), verify Flyway migrates + bootstrap users appear.
+2. **User provides Upstash `REDIS_URL`** → run with `CACHE_TYPE=redis`, verify hit/miss + eviction against real Redis (watch for serialization of `PageResponse` records through GenericJackson2JsonRedisSerializer — validated only against simple cache so far; if deserialization misbehaves, fall back to caching JSON strings).
+3. **Phase 9 deploy** (user does all dashboard clicks; NO MCP tools):
+   - GitHub repo + push (user creates repo, we add remote and push)
+   - Render Web Service: build `./mvnw clean package -DskipTests`, start `java -jar target/optiqueue-backend-0.0.1-SNAPSHOT.jar`, env: DB_URL/DB_USERNAME/DB_PASSWORD/REDIS_URL/CACHE_TYPE=redis/JWT_SECRET (generate strong!)/CORS_ALLOWED_ORIGINS=<vercel url>/bootstrap admin+staff passwords
+   - Vercel: import `optiqueue-frontend`, env `VITE_API_BASE_URL=<render url>`; SPA rewrite for react-router (vercel.json with rewrites to /index.html — NOT YET CREATED)
+   - README.md for GitHub (NOT YET WRITTEN)
+4. Optional: re-run read-load benchmark against deployed stack for a Redis-specific cache figure.
 
-## 9. Benchmark results (fill with REAL numbers only)
+## 9. Benchmark results (all REAL, measured 2026-07-18 — full detail in benchmarks/RESULTS.md)
 
-- Index latency improvement: _not yet measured_
-- Cache DB-load reduction: _not yet measured_
-- Max clean concurrent orders: _not yet measured (local integration test: 20 threads, 0 oversell)_
+- **Indexing**: avg hot-query latency 17.58 ms → 1.53 ms (**~91% cut**) on 100k orders/200k items/10k products (PostgreSQL 14).
+- **Concurrency**: 500 concurrent buyers → 495 orders (99%), **0 oversold units**; worst-case 300 VUs on ONE row → 159 orders, 141 clean 409s, **0 oversold**. Invariant `final_stock == initial − successes` held in every run.
+- **Cache**: identical 30s read load — avg 20.82 → 7.73 ms (**−63%**), throughput 938 → 2,482 rps (**2.6×**), p95 −63%.
+
+## 10. Local dev/testing infrastructure (no cloud needed)
+
+- `LocalDevApplication` (src/test) runs the real app on embedded Postgres: `./mvnw test-compile exec:java -Dexec.mainClass=com.optiqueue.LocalDevApplication -Dexec.classpathScope=test` (+ optional `CACHE_TYPE=simple|none` env). Data is per-process, wiped on restart. Bootstrap users admin/admin12345, staff/staff12345.
+- `IndexBenchmark` (src/test) — Phase 6 harness, self-contained.
+- k6 binary at `~/.local/bin/k6` (v0.57.0, portable install). Scripts: `k6/order-race.js` (concurrency), `k6/read-load.js` (cache).
+- Frontend dev: `npm run dev` in optiqueue-frontend (Vite polls files — host inotify limit exhausted; permanent fix needs sudo sysctl fs.inotify.max_user_watches=524288).
