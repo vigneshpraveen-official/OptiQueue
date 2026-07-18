@@ -17,7 +17,7 @@
 | 5. Redis caching (Upstash) | Day 5 | 🟡 CODE DONE | `ProductCachingIntegrationTest`; cache benchmarked (−63% avg latency, 2.6× throughput). Only the Upstash connection itself pends user credentials |
 | 6. Seed 10k products + index benchmark | Day 6 | ✅ DONE | `IndexBenchmark` — ~91% avg latency cut, see benchmarks/RESULTS.md |
 | 7. k6 concurrency load test | Day 7 | ✅ DONE | `k6/order-race.js` — 500 VUs, 0 oversell, see benchmarks/RESULTS.md |
-| 8. React frontend | Day 8 | ✅ DONE | builds clean; dev server verified serving; browser walk-through by user pending |
+| 8. React frontend | Day 8 | ✅ DONE | Playwright browser E2E 9/9 (register→cart→order→admin ship→staff RBAC); screenshots in docs/screenshots |
 | 9. Deploy (Render/Vercel) + README | Day 9 | ⬜ TODO | blocked on user accounts |
 
 **Test suite:** 20/20 passing (`./mvnw test` with `JAVA_HOME=~/.jdks/jdk-17.0.19+10`).

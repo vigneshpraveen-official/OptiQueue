@@ -12,6 +12,12 @@
 | Query optimization | Secondary indexing cut avg hot-query latency **17.6 ms → 1.5 ms (~91%)** on 100k orders / 200k order items |
 | Caching | Repeat-read avg response **−63%** (20.8 → 7.7 ms), throughput **2.6×** (938 → 2,482 req/s) |
 
+## Screenshots
+
+| Store | Admin dashboard |
+|---|---|
+| ![Product list](docs/screenshots/02-products.png) | ![Admin dashboard](docs/screenshots/05-admin-dashboard.png) |
+
 ## Architecture
 
 ```
